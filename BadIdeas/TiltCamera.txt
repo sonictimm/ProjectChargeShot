@@ -1,0 +1,28 @@
+
+.h
+
+	//Camera's default angle
+	float CameraHomeAngle;
+	//How far we can tilt it comfortably:
+	float maxAngleDelta = 7;
+	float minAngleDelta = 15;
+
+.cpp
+
+	//Setup follow cam tilt
+	CameraHomeAngle = FollowCamera->GetComponentRotation().Pitch;
+	maxAngleDelta = 7.f;
+	minAngleDelta = 15.f;
+
+void ASurvios_2019_01Character::TiltCamera()
+{
+	//Hey, either abandon this or make it use the original LookUpDown somehow, no need to crank away like you are, it's a waste of time.
+	float zSpeed = GetCharacterMovement()->Velocity.Z;
+	float tiltAmount;
+	if (zSpeed > 0)	//Going up
+		tiltAmount = FMath::Clamp<float>(zSpeed / 1500.f, 0.f, 7.0f);
+	else    //going down
+		tiltAmount = FMath::Clamp<float>(zSpeed / 2500.f, -15.f, 0.f);
+	FRotator newRotation = FRotator(tiltAmount + CameraHomeAngle, FollowCamera->GetComponentRotation().Yaw, FollowCamera->GetComponentRotation().Roll);
+	FollowCamera->SetWorldRotation(newRotation, false, nullptr, ETeleportType::None);
+}
