@@ -1,0 +1,15 @@
+Jump
+Falling
+PlayerHit
+
+Enemyjump
+Enemyfalling
+EnemyHit
+
+Death
+
+Run
+Reflect
+shoot
+ShotAmbientSound
+
