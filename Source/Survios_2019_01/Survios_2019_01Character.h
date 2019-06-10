@@ -106,6 +106,20 @@ public:
 	UPROPERTY(EditAnywhere, Category = Camera)
 	bool bCamAutoRotateX;
 
+	//Camera Y Axis rotation
+	UPROPERTY(EditAnywhere, Category = Camera)
+	bool bCamAutoRotateY;
+	float fCamInitialPitch;
+	UPROPERTY(EditAnywhere, Category = Camera)
+	float fMaxFallCameraAngle;
+	UPROPERTY(EditAnywhere, Category = Camera)
+		float fMaxFallCameraSpeed;
+	UPROPERTY(EditAnywhere, Category = Camera)
+		float fMinFallCameraAngle;
+	UPROPERTY(EditAnywhere, Category = Camera)
+		float fMinFallCameraSpeed;
+
+
 	//When running for a while, what is the max character movement speed?
 	UPROPERTY(EditAnywhere, Category = Input)
 	float maxRunSpeed;
@@ -213,6 +227,9 @@ public:
 	//Toggles or returns camera auto-rotation
 	bool CameraMode();
 	bool CameraMode(bool mode);
+
+	//Work with cam Y rotation
+	FRotator SetCameraYRotation(float zVelocity, FRotator camAngle);
 
 	//set pause
 	void SetGamePaused(bool bIsPaused);

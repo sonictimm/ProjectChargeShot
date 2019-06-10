@@ -8,7 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Engine/Engine.h"	//Not to be confused with Engine.h, which comes with a MILLION things
+#include "Engine/Engine.h"	//Not to be confused with "Engine.h", which comes with a MILLION things
 #include "Runtime/Engine/Public/EngineGlobals.h"
 #include "GameFramework/PlayerController.h"
 #include "EnemyClass.h"
@@ -61,7 +61,7 @@ ASurvios_2019_01Character::ASurvios_2019_01Character()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
-
+	
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
@@ -81,6 +81,13 @@ ASurvios_2019_01Character::ASurvios_2019_01Character()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 	
+	//When character falls or rises, how should that affect camera?
+	bCamAutoRotateY = true;
+	fMaxFallCameraAngle = 70;
+	fMaxFallCameraSpeed = 1600;
+	fMinFallCameraAngle = -50;
+	fMinFallCameraSpeed = -4000;
+
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 }
@@ -133,6 +140,9 @@ void ASurvios_2019_01Character::BeginPlay()
 
 	SetHealth(maxHealth);
 
+	//save camera's initial angle
+	fCamInitialPitch = FollowCamera->GetComponentRotation().Pitch;
+
 	//Enable hit events for the capsule
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &ASurvios_2019_01Character::OnCompHit);
 	//set overlap function, which calls OnComponentHit
@@ -144,8 +154,13 @@ void ASurvios_2019_01Character::Tick(float DeltaTime)	//Note: The BP version of 
 	Super::Tick(DeltaTime);
 
 	//this may be better served by a timer, not totally sure
+	//reset combo when player lands
 	if (!GetCharacterMovement()->IsFalling())
 		combo = 0;
+	//set camera pitch based on rising/falling
+	if (bCamAutoRotateY)
+		FollowCamera->SetWorldRotation(SetCameraYRotation(this->GetVelocity().Z, FollowCamera->GetComponentRotation()));
+
 }
 
 bool ASurvios_2019_01Character::CameraMode()
@@ -158,6 +173,27 @@ bool ASurvios_2019_01Character::CameraMode(bool mode)
 	//sets desired camera mode
 	bCamAutoRotateX = mode;
 	return CameraMode();
+}
+
+FRotator ASurvios_2019_01Character::SetCameraYRotation(float zVelocity, FRotator camAngle)
+{
+	//how much should the original angle be modified by?
+	//float angleMod = (0.02142857142857142857142857142857 * zVelocity);// +35.714285714285714285714285714286;
+		//Formula is derived from a linear function with the highest and lowest desired angles as points.
+	//If it's above or below the max/min angles, use the max/min.
+		//but it should not be hardcoded, let the designer set these variables.
+	//we're using zvelocity as x, and resulting angle mod as y.    y = mx + b form.  m is a calculation of slope, b is y - mx (derived with algebra)
+	float angleMod = (((fMaxFallCameraAngle - fMinFallCameraAngle) / (fMaxFallCameraSpeed - fMinFallCameraSpeed)) * zVelocity);// +(fMaxFallCameraAngle - (((fMaxFallCameraAngle - fMinFallCameraAngle) / (fMaxFallCameraSpeed - fMinFallCameraSpeed)) * zVelocity));
+	if (angleMod > fMaxFallCameraAngle)
+		return FRotator(camAngle.Roll, fCamInitialPitch + fMaxFallCameraAngle, camAngle.Yaw);
+	else if (angleMod < fMinFallCameraAngle)
+		return FRotator(camAngle.Roll, fCamInitialPitch + fMinFallCameraAngle, camAngle.Yaw);
+	else
+	{
+		//return FRotator(camAngle.Roll, fCamInitialPitch + angleMod, camAngle.Yaw);
+		//return FRotator(camAngle.Roll, camAngle.Pitch,camAngle.Yaw);
+		return FRotator(fCamInitialPitch + angleMod, camAngle.Yaw, camAngle.Roll);
+	}
 }
 
 
