@@ -151,7 +151,7 @@ void ASurvios_2019_01Character::BeginPlay()
 
 void ASurvios_2019_01Character::Tick(float DeltaTime)	//Note: The BP version of tick doesn't override this
 {
-	Super::Tick(DeltaTime);
+	Super::Tick(DeltaTime);   
 
 	//this may be better served by a timer, not totally sure
 	//reset combo when player lands
